@@ -6,7 +6,8 @@
 Плагин добавляет возможность использовать теги [xfsearch] и [not-xfsearch] в шаблонах для вывода контента на страницах xfsearch.
 
 ## Установка
-- Скачать [последнюю версию](https://github.com/dle-modules/DLE-YandexMaps/releases/latest) плагина.
+- Скачать файл dle-plugin-xfsearch.xml
+из [актуальной версии](https://github.com/dle-modules/DLE-Plugin-XfSearch/releases/latest) плагина.
 - Установить на сайт через систему плагинов.
 
 ## Обновление
