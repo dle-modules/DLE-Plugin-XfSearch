@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dleplugin>
+	<name>DLE-Plugin-XfSearch</name>
+	<description>Плагин добавляет возможность использовать теги [xfsearch] и [not-xfsearch] в шаблонах для вывода контента на страницах xfsearch</description>
+	<icon></icon>
+	<version>1.0.0</version>
+	<dleversion>14</dleversion>
+	<versioncompare>greater</versioncompare>
+	<upgradeurl>https://updates.pafnuty.name/check-xfsearch.php</upgradeurl>
+	<filedelete>0</filedelete>
+	<needplugin></needplugin>
+	<mnotice>1</mnotice>
+	<mysqlinstall><![CDATA[]]></mysqlinstall>
+	<mysqlupgrade><![CDATA[]]></mysqlupgrade>
+	<mysqlenable><![CDATA[]]></mysqlenable>
+	<mysqldisable><![CDATA[]]></mysqldisable>
+	<mysqldelete><![CDATA[]]></mysqldelete>
+	<phpinstall><![CDATA[]]></phpinstall>
+	<phpupgrade><![CDATA[]]></phpupgrade>
+	<phpenable><![CDATA[]]></phpenable>
+	<phpdisable><![CDATA[]]></phpdisable>
+	<phpdelete><![CDATA[]]></phpdelete>
+	<notice><![CDATA[<a href="https://github.com/dle-modules/DLE-Plugin-XfSearch/releases/latest" terget="_blank">Release notes</a> | <a href="https://github.com/dle-modules/DLE-Plugin-XfSearch/blob/master/README.md" terget="_blank">Readme</a>]]></notice>
+	<file name="engine/classes/templates.class.php">
+		<operation action="before">
+			<searchcode><![CDATA[function check_group( $matches ) {]]></searchcode>
+			<replacecode><![CDATA[    /**
+     * Функция для проверки тегов `xfsearch` и `not-xfsearch` в любом шаблоне
+     * Примеры:
+     * - [xfsearch=xfield_name]...[xfsearch]
+     * - [xfsearch=xfield_name/value]...[xfsearch]
+     * - [xfsearch=xfield_name,xfield_name/*]...[xfsearch]
+     * - [not-xfsearch=xfield_name]...[not-xfsearch]
+     * - [not-xfsearch=xfield_name/value]...[not-xfsearch]
+     * - [not-xfsearch=xfield_name,xfield_name/*]...[not-xfsearch]
+     *
+     * @param array $matches
+     *
+     * @return string|string[]|null
+     */
+    function check_xfsearch($matches) {
+        global $config;
+        $regex = '/\[(xfsearch|not-xfsearch)=(.*?)\]((?>(?R)|.)*?)\[\/\1\]/is';
+
+        if (is_array($matches)) {
+
+            $xfsearch = $matches[2];
+            $block    = $matches[3];
+
+            if ($matches[1] == "xfsearch") {
+                $action = true;
+            } else {
+                $action = false;
+            }
+
+            $xfsearch = explode(',', $xfsearch);
+
+            $xf = rawurldecode($_GET['xf']);
+
+            if (dle_substr($xf, -1, 1, $config['charset']) == '/') {
+                $xf = dle_substr($xf, 0, -1, $config['charset']);
+            }
+
+            $xf     = explode('/', $xf);
+            $xfname = "";
+
+            if ($_GET['xfname'] AND !$config['allow_alt_url']) {
+                $xfname = totranslit(trim($_GET['xfname']));
+            } elseif (count($xf) > 1) {
+                $xfname = totranslit(trim($xf[0]));
+                unset($xf[0]);
+            }
+
+            $xf = implode(' ', $xf);
+            $xf = htmlspecialchars(strip_tags(stripslashes(trim($xf))), ENT_QUOTES, $config['charset']);
+            $xf = str_replace(["{", "[", ":"], ["&#123;", "&#91;", "&#58;"], $xf);
+
+            $fullXf = ($xfname) ? $xfname.'/'.$xf : $xf;
+
+            /**
+             * If we have a `xfname` value, we should check cases with star.
+             * E.g. `[xfsearch=xfield/*]...[/xfsearch]` should show in any xfield value
+             */
+            if ($xfname) {
+                foreach ($xfsearch as &$xfsearchItem) {
+                    $xfEnd = explode('/', $xfsearchItem);
+                    if (isset($xfEnd[1]) && $xfEnd[1] == '*') {
+                        $xfEnd[1]     = $xf;
+                        $xfsearchItem = implode('/', $xfEnd);
+                    }
+
+                }
+            }
+
+            if ($action) {
+                if (!in_array($fullXf, $xfsearch)) {
+                    $matches = '';
+                } else {
+                    $matches = $block;
+                }
+            } else {
+                if (in_array($fullXf, $xfsearch)) {
+                    $matches = '';
+                } else {
+                    $matches = $block;
+                }
+            }
+        }
+
+        return preg_replace_callback($regex, [&$this, 'check_xfsearch'], $matches);
+
+    }]]></replacecode>
+		</operation>
+		<operation action="after">
+			<searchcode><![CDATA[$this->template = $this->check_module($this->template);]]></searchcode>
+			<replacecode><![CDATA[if (stripos ( $this->template, "[xfsearch=" ) !== false OR stripos( $this->template, "[not-xfsearch=" ) !== false) {
+            $this->template = $this->check_xfsearch($this->template);
+        }]]></replacecode>
+		</operation>
+		<operation action="after">
+			<searchcode><![CDATA[$template = $this->check_module($template);]]></searchcode>
+			<replacecode><![CDATA[if (stripos ( $template, "[xfsearch=" ) !== false OR stripos( $template, "[not-xfsearch=" ) !== false) {
+            $template = $this->check_xfsearch($template);
+        }]]></replacecode>
+		</operation>
+	</file>
+</dleplugin>
