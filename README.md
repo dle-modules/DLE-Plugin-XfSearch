@@ -1,5 +1,5 @@
 # DLE-Plugin-XfSearch
-![Release version](https://img.shields.io/github/v/release/dle-modules/DLE-Plugin-XfSearch?label=version&style=flat-square)
+![Release version](https://img.shields.io/github/v/release/dle-modules/DLE-Plugin-XfSearch?style=flat-square)
 ![DLE](https://img.shields.io/badge/DLE-14.x-green.svg?style=flat-square "DLE Version")
 ![License](https://img.shields.io/github/license/dle-modules/DLE-Plugin-XfSearch?style=flat-square)
 
